@@ -1,3 +1,4 @@
 out/*
 bin/*
 *.sw*
+node_modules/
