@@ -1,0 +1,19 @@
+{
+  "name": "killbot_hellscape",
+  "version": "1.0.0",
+  "description": "![Image of Yaktocat](https://imgs.xkcd.com/comics/the_three_laws_of_robotics_2x.png)",
+  "main": "./src/server/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TyPetrochko/killbot_hellscape.git"
+  },
+  "author": "Tyler Petrochko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TyPetrochko/killbot_hellscape/issues"
+  },
+  "homepage": "https://github.com/TyPetrochko/killbot_hellscape#readme"
+}
