@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/TyPetrochko/killbot_hellscape/issues"
   },
-  "homepage": "https://github.com/TyPetrochko/killbot_hellscape#readme"
+  "homepage": "https://github.com/TyPetrochko/killbot_hellscape#readme",
+  "dependencies": {
+    "ws": "^7.1.1"
+  }
 }
