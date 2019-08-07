@@ -5,61 +5,69 @@
 //
 
 function get_my_id(ws) {
-  // TODO
+  ws.send(JSON.stringify({what: "get_my_id"}));
 }
 
 function get_robot_id(ws) {
-  // TODO
+  ws.send(JSON.stringify({what: "get_robot_id"}));
+}
+
+function is_defined(v) {
+  return typeof v !== "undefined";
 }
 
 
 function KillbotServer(url, onReady) {
-  this.ready = false;
-  this.server = new WebSocket(url);
-  this.ids_to_peers = {};
+  var self = this;
+  this.init = function () {
+    self.ready = false;
+    self.server = new WebSocket(url);
+    self.ids_to_peers = {};
+    self.ids_to_ice_candidates = {};
 
-  this.server.onopen = function (e) {
-    this.ready = true;
-    this.my_id = get_my_id(this.server)
-    onReady();
+    self.server.onopen = function (e) {
+      self.setupRouting();
+      self.onReady = onReady;
+      get_my_id(self.server);
+      get_robot_id(self.server);
+    };
   }
 
-  this.setupRouting();
 
   ////////////////////
   // High-level API //
   ////////////////////
   
-  this.connectToRobot = function (conf) {
-    on_stream = config.onStream || function (s) {};
-    on_close = config.onClose || function () {};
-    on_error = config.onError || function(err) {};
+  self.connectToRobot = function (conf) {
+    console.log("Connecting to robot id: "+self.robot_id);
+    on_stream = conf.onStream || function (s) {};
+    on_close = conf.onClose || function () {};
+    on_error = conf.onError || function(err) {};
 
-    if (! this.ready) {
-      on_error("Killbot Server is not ready yet!");
+    if (! self.ready) {
+      console.log("Killbot Server is not ready yet!");
       return;
     }
 
-    this.robot_id = get_robot_id(this.server);
-    if (! this.robot_id) {
-      on_error("No robot connected!");
+    if (! is_defined(self.robot_id)) {
+      console.log("No robot connected!");
       return;
     }
 
-    this.stream_from({
-      client_id: this.robot_id,
+    self.stream_from({
+      client_id: self.robot_id,
       on_stream: on_stream,
       on_close: on_close,
       on_error: on_error,
     })
-  }
+  };
   
   /////////////////////
   // Low-level Impl. //
   /////////////////////
   
-  this.stream_from = function(conf) {
-    client_id = conf.client
+  self.stream_from = function(conf) {
+    client_id = conf.client_id
     on_stream = conf.on_stream
     on_hangup = conf.on_hangup
     on_error = conf.on_error
@@ -69,7 +77,7 @@ function KillbotServer(url, onReady) {
     var options = {optional: []};
     var pc = new RTCPeerConnection(config, options);
 
-    this.ids_to_peers[client_id] = pc
+    self.ids_to_peers[client_id] = pc
 
     // 2. Handle "Ice Candidates" (hacks we can use to traverse NAT)
     iceCandidates = [];
@@ -87,9 +95,9 @@ function KillbotServer(url, onReady) {
           data: JSON.stringify(candidate)
         };
 
-        this.send_to_client(request, client_id)
+        self.send_to_client(request, client_id);
       }
-    }
+    };
 
     // 3. Handle successfully added media track
     if ('ontrack' in pc) {
@@ -105,11 +113,11 @@ function KillbotServer(url, onReady) {
     // 4. These probably won't be called...
     pc.onremovestream = function (e) {
       console.log("A data stream was removed.");
-    }
+    };
     pc.ondatachannel = function (e) {
       console.log("A data stream is available! More info:");
       console.log("https://www.linux-projects.org/uv4l/tutorials/webrtc-data-channels/");
-    }
+    };
 
     // 5. Try to connect
     var request = {
@@ -122,33 +130,43 @@ function KillbotServer(url, onReady) {
       }
     };
 
-    this.send_to_client(request, client_id);
+    self.send_to_client(request, client_id);
   }
 
   // Route messages from the server accordingly
-  this.setupRouting = function () {
-    this.server.onmessage = function (e) {
-      var message = JSON.parse(e);
+  self.setupRouting = function () {
+    self.server.onmessage = function (e) {
+      var message = JSON.parse(e.data);
       var what = message.what
       var to = message.to_client_id
 
+      console.log("Received message: "+e.data);
+
       // Make sure it was meant for us
-      if (to != this.my_id) {
-        console.log(`We (${this.my_id}) accidentally got a message meant for ${to}`);
+      if (is_defined(to) && to != self.my_id) {
+        console.log(`We (${self.my_id}) accidentally got a message meant for ${to}`);
         return;
       }
 
       switch (what) {
+        // WebRTC signals
         case "offer":
-          this.handle_offer(message);
+          self.handle_offer(message);
           break;
         case "iceCandidate":
-          this.handle_ice_candidate(message);
+          self.handle_ice_candidate(message);
           break;
         case "iceCandidates":
-          this.handle_ice_candidates(message);
-          break
+          self.handle_ice_candidates(message);
+          break;
         case "answer":
+          break;
+        // Server signals
+        case "set_your_id":
+          self.set_my_id(message.data);
+          break;
+        case "set_robot_id":
+          self.set_robot_id(message.data);
           break;
         default:
           console.log("Bad message type:");
@@ -163,19 +181,149 @@ function KillbotServer(url, onReady) {
   // Low-level Utils //
   /////////////////////
 
-  this.send_to_client(request, client_id) {
-    // TODO
+  self.send_to_client = function (request, client_id) {
+    console.log("Sending request to "+client_id);
+    console.log(request);
+    if (! is_defined(self.my_id)) {
+      console.log("Can't send without an id... Aborting.");
+      return;
+    }
+
+    request.from = self.my_id;
+    request.to = client_id;
+    self.server.send(JSON.stringify(request));
   }
 
-  this.handle_offer(message) {
-    // TODO
-  }
+  self.handle_offer = function (message) {
+    peer = self.ids_to_peers[message.from];
+    if (! peer) {
+      console.log("Unknown peer: "+message.from);
+      return;
+    }
+    var mediaConstraints = {
+      optional: [],
+      mandatory: {
+          OfferToReceiveAudio: true,
+          OfferToReceiveVideo: true
+      }
+    };
 
-  this.handle_ice_candidate(message) {
-    // TODO
-  }
+    peer.setRemoteDescription(new RTCSessionDescription(JSON.parse(message.data)),
+      function onRemoteSdpSuccess() {
+        // Start the exchange by sending an answer
+        pc.createAnswer(function (sessionDescription) {
+          pc.setLocalDescription(sessionDescription);
+          var request = {
+              what: "answer",
+              data: JSON.stringify(sessionDescription)
+          };
+          ws.send(JSON.stringify(request));
+        }, function (error) {
+            onError("failed to create answer: " + error);
+        }, mediaConstraints);
+      },
+      function onRemoteSdpError(e) {
+        console.log("Got error connecting, something is broken: "+e);
+      },
+    );
+  };
 
-  this.handle_ice_candidates(message) {
-    // TODO
-  }
+  // Trickle used
+  self.handle_ice_candidate = function (message) {
+    peer = self.ids_to_peers[message.from];
+    if (! peer) {
+      console.log("Unknown peer: "+message.from);
+      return;
+    }
+    if (! message.data) {
+      console.log("Received all ice candidates");
+      return;
+    }
+
+    var elt = JSON.parse(msg.data);
+    let candidate = new RTCIceCandidate({
+      sdpMLineIndex: elt.sdpMLineIndex,
+      candidate: elt.candidate
+    });
+
+    // Track candidates
+    if(! self.ids_to_ice_candidates[message.from]) {
+      self.ids_to_ice_candidates[message.from] = [];
+    }
+    self.ids_to_ice_candidates[message.from].push(candidate);
+
+    // Send candidates
+    self.send_ice_candidates(message.from);
+  };
+
+  // Trickle NOT used
+  self.handle_ice_candidates = function (message) {
+    peer = self.ids_to_peers[message.from];
+    if (! is_defined(peer)) {
+      console.log("Unknown peer: "+message.from);
+      return;
+    }
+    
+    var candidates = JSON.parse(message.data);
+    for (var i = 0; candidates && i < candidates.length; i++) {
+      var elt = candidates[i];
+      let candidate = new RTCIceCandidate({
+        sdpMLineIndex: elt.sdpMLineIndex,
+        candidate: elt.candidate
+      });
+      
+      // Track candidates
+      if(! self.ids_to_ice_candidates[message.from]) {
+        self.ids_to_ice_candidates[message.from] = [];
+      }
+      self.ids_to_ice_candidates[message.from].push(candidate);
+    }
+    self.send_ice_candidates(message.from);
+  };
+
+  self.send_ice_candidates = function (peer_id) {
+    peer = self.ids_to_peers[peer_id];
+    candidates = self.ids_to_ice_candidates[peer_id];
+
+    if (! is_defined(peer)) {
+      console.log("Peer "+peer_id+" does not exist");
+      return;
+    }
+
+    candidates.forEach(function(candidate) {
+      peer.addIceCandidate(candidate, 
+        function(){
+          console.log("Candidate added: "+JSON.stringify(candidate));
+        }, 
+        function(err){
+          console.log("Could not add candidate "+JSON.stringify(candidate)+": "+err);
+        }
+      );
+    });
+  };
+
+  self.set_my_id = function (id) {
+    console.log("My id is: "+id);
+    self.my_id = id;
+    
+    // Are we ready to start?
+    if (is_defined(self.my_id) && is_defined(self.robot_id)) {
+      self.ready = true;
+      self.onReady();
+    }
+  };
+
+  self.set_robot_id = function(id) {
+    console.log("Robot id is: "+id);
+    self.robot_id = id;
+    
+    // Are we ready to start?
+    if (is_defined(self.my_id) && is_defined(self.robot_id)) {
+      self.ready = true;
+      self.onReady();
+    }
+  };
+
+  // Initialize
+  self.init();
 }

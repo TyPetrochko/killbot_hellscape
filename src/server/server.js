@@ -16,6 +16,9 @@ server = https.createServer(serverConfig = {
   } else if (request.url === '/client.js') {
     response.writeHead(200, {'Content-Type': 'text/html'});
     response.end(fs.readFileSync('src/web-client/client.js'));
+  } else if (request.url === '/killbot-server.js') {
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    response.end(fs.readFileSync('src/web-client/killbot-server.js'));
   }
 })
 
@@ -23,7 +26,7 @@ server = https.createServer(serverConfig = {
 const wss = new WebSocketServer({server});
 
 // Which client is our robot?
-var robot_id;
+var robot_id = -1; // TODO remove test default value
 
 // Track clients
 var next_id = 0
@@ -32,23 +35,25 @@ var clients_to_ids = {};
 
 // Client / Server exchange format:
 // {
-//  what = 'get_client_id' | 'i_am_robot' | 'call' ...
+//  what = 'get_my_id' | 'i_am_robot' | 'call' ...
 //  origin_client_id = 12345;
 //  destination_client_id = 2345;
 //  data = '...'
 // }
 // 
 // Client can send messages with types:
-// * get_client_id
+// * get_my_id
 // * webrtc
 // * i_am_robot
 // * call
 // * offer
 // * hangup
 // * answer
+// * get_robot_id
 //
 // Server can send messages with types
-// * set_client_id
+// * set_your_id
+// * set_robot_id
 // * webrtc
 //
 function onMessage(client, data) {
@@ -65,10 +70,10 @@ function onMessage(client, data) {
     }
   }
 
-  switch (message.type) {
-    case 'get_client_id':
+  switch (message.what) {
+    case 'get_my_id':
       // Assign client their ID
-      client.send(JSON.stringify({'type': 'set_client_id', 'data': next_id}));
+      client.send(JSON.stringify({'what': 'set_your_id', 'data': next_id}));
       ids_to_clients[next_id] = client
       clients_to_ids[client] = next_id
       next_id += 1;
@@ -76,9 +81,18 @@ function onMessage(client, data) {
     case 'i_am_robot':
       // Remember which client is robot
       robot_id = clients_to_ids[client];
+      break;
+    case 'get_robot_id':
+      client.send(JSON.stringify({'what': 'set_robot_id', 'data': robot_id}));
+      break;
+    case 'offer':
+    case 'answer':
+    case 'iceCandidate':
+    case 'iceCandidates':
+      // TODO: Route these accordingly!
     default:
       // Bad data
-      console.log('Unknown message type: '+message.type);
+      console.log('Unknown message type: '+message.what);
   }
 
 
