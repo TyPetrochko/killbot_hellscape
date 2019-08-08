@@ -29,6 +29,7 @@
 * When web client disconnects from web server, it should automatically hangup
 * Clean server-side code
 * Clean ras-client code
+* Allow users to specify connection options (quality, hardware codec, etc.)
 
 # API
 ```javascript
