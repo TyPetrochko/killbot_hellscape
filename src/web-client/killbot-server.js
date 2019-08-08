@@ -19,6 +19,7 @@ function is_defined(v) {
 
 function KillbotServer(url, onReady) {
   var self = this;
+  
   this.init = function () {
     self.ready = false;
     self.server = new WebSocket(url);
@@ -81,7 +82,6 @@ function KillbotServer(url, onReady) {
 
     // 2. Handle "Ice Candidates" (hacks we can use to traverse NAT)
     iceCandidates = [];
-    hasRemoteDesc = false;
     pc.onicecandidate = function (e) {
       if (e.candidate) {
         var candidate = {
@@ -102,9 +102,11 @@ function KillbotServer(url, onReady) {
     // 3. Handle successfully added media track
     if ('ontrack' in pc) {
       pc.ontrack = function (e) {
+        console.log("Got remote stream!");
         on_stream(e.streams[0]);
       };
     } else {  // onaddstream() deprecated
+        console.log("Got remote stream! (Deprecated version)");
         pc.onaddstream = function (e) {
           on_stream(e.stream);
       };
@@ -140,7 +142,7 @@ function KillbotServer(url, onReady) {
       var what = message.what
       var to = message.to_client_id
 
-      console.log("Received message: "+e.data);
+      console.log("RECEIVED: "+e.data);
 
       // Make sure it was meant for us
       if (is_defined(to) && to != self.my_id) {
@@ -182,7 +184,7 @@ function KillbotServer(url, onReady) {
   /////////////////////
 
   self.send_to_client = function (request, client_id) {
-    console.log("Sending request to "+client_id);
+    console.log("Sending request to "+client_id+":");
     console.log(request);
     if (! is_defined(self.my_id)) {
       console.log("Can't send without an id... Aborting.");
@@ -210,14 +212,16 @@ function KillbotServer(url, onReady) {
 
     peer.setRemoteDescription(new RTCSessionDescription(JSON.parse(message.data)),
       function onRemoteSdpSuccess() {
+        console.log("Remote SDP success!");
         // Start the exchange by sending an answer
-        pc.createAnswer(function (sessionDescription) {
-          pc.setLocalDescription(sessionDescription);
+        peer.createAnswer(function (sessionDescription) {
+          peer.setLocalDescription(sessionDescription);
+          // TODO fix - ws no exist!
           var request = {
               what: "answer",
               data: JSON.stringify(sessionDescription)
           };
-          ws.send(JSON.stringify(request));
+          self.send_to_client(request, message.from);
         }, function (error) {
             onError("failed to create answer: " + error);
         }, mediaConstraints);
@@ -240,7 +244,7 @@ function KillbotServer(url, onReady) {
       return;
     }
 
-    var elt = JSON.parse(msg.data);
+    var elt = JSON.parse(message.data);
     let candidate = new RTCIceCandidate({
       sdpMLineIndex: elt.sdpMLineIndex,
       candidate: elt.candidate

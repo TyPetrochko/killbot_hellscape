@@ -12,9 +12,12 @@ function start() {
   streamButton.onclick = function() {
     streamButton.disabled = true;
     server.connectToRobot({
-      on_stream: function(s) {console.log("Got a stream!");},
-      on_close: function() {console.log("Closed connection...");},
-      on_error: function(e) {console.log("Got error: "+e);},
+      onStream: function(stream) {
+        var video = document.getElementById('video-player');
+        video.srcObject = stream;
+      },
+      onClose: function() {alert("Closed connection...");},
+      onError: function(e) {alert("Got error: "+e);},
     });
   };
 }
