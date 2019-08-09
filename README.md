@@ -24,12 +24,15 @@
     * DONE
 
 # TODO
+* When web client disconnects from web server, it should automatically hangup
+  * DONE but needs debugging
 * E2E Test
 * Add control layer with data channels
-* When web client disconnects from web server, it should automatically hangup
 * Clean server-side code
 * Clean ras-client code
 * Allow users to specify connection options (quality, hardware codec, etc.)
+* Support 1:n broadcasting
+* Support resetting robot / no robot available
 
 # API
 ```javascript

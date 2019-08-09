@@ -1,26 +1,36 @@
-var HTTPS_PORT = 8443;
-var url = "wss://" + window.location.hostname + ":" + HTTPS_PORT ;
+const HTTPS_PORT = 8443;
+const URL = "wss://" + window.location.hostname + ":" + HTTPS_PORT;
 
-function start() {
-  // 1. Make a killbot server
-  server = new KillbotServer(url, function onReady() {
-    console.log("Killbot server ready!");
-  });
+var killbotServer;
+var streamButton;
+var videoPlayer;
 
-  // 2. Clicking stream should open a stream
-  streamButton = document.getElementById('streamButton');
-  streamButton.onclick = function() {
-    streamButton.disabled = true;
-    server.connectToRobot({
+function start () {
+  streamButton.disabled = true;
+  killbotServer = new KillbotServer(URL, function onReady() {
+    console.log("Killbot Server is ready!");
+    killbotServer.connectToRobot({
       onStream: function(stream) {
-        var video = document.getElementById('video-player');
-        video.srcObject = stream;
+        videoPlayer.srcObject = stream;
       },
       onClose: function() {alert("Closed connection...");},
       onError: function(e) {alert("Got error: "+e);},
     });
-  };
+  });
 }
 
-window.onload = start;
+function stop () {
+  killbotServer.stop();
+}
 
+function setup () {
+  streamButton = document.getElementById("streamButton");
+  videoPlayer = document.getElementById("video-player");
+  streamButton.onclick = start; 
+}
+
+
+window.onload = setup;
+window.onbeforeunload = function () {
+  streamButton.disabled = false;
+}

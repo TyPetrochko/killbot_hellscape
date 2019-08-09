@@ -13,7 +13,13 @@ function get_robot_id(ws) {
 }
 
 function is_defined(v) {
-  return typeof v !== "undefined";
+  if (typeof v === "undefined") {
+    return false;
+  } else if (v === null) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 
@@ -25,6 +31,10 @@ function KillbotServer(url, onReady) {
     self.server = new WebSocket(url);
     self.ids_to_peers = {};
     self.ids_to_ice_candidates = {};
+    self.ids_to_streams = {};
+    self.ids_to_data_channels = {};
+    self.my_id = null;
+    self.robot_id = null;
 
     self.server.onopen = function (e) {
       self.setupRouting();
@@ -54,13 +64,29 @@ function KillbotServer(url, onReady) {
       console.log("No robot connected!");
       return;
     }
-
+    
     self.stream_from({
       client_id: self.robot_id,
       on_stream: on_stream,
       on_close: on_close,
       on_error: on_error,
     })
+  };
+
+  self.stop = function() {
+    Object.keys(self.ids_to_peers).forEach(function (id) {
+      if (is_defined(self.ids_to_streams[id])) {
+        self.ids_to_streams[id].close();
+        self.ids_to_streams[id] = null;
+      }
+      if (is_defined(self.ids_to_data_channels[id])) {
+        self.ids_to_data_channels[id].close();
+        self.ids_to_data_channels[id] = null;
+      }
+      ids_to_peers[id].close();
+      ids_to_peers[id] = null;
+      ids_to_ice_candidates[id] = null;
+    });
   };
   
   /////////////////////
@@ -104,6 +130,8 @@ function KillbotServer(url, onReady) {
       pc.ontrack = function (e) {
         console.log("Got remote stream!");
         on_stream(e.streams[0]);
+
+        self.track_stream(client_id, e.streams[0]);
       };
     } else {  // onaddstream() deprecated
         console.log("Got remote stream! (Deprecated version)");
@@ -119,6 +147,7 @@ function KillbotServer(url, onReady) {
     pc.ondatachannel = function (e) {
       console.log("A data stream is available! More info:");
       console.log("https://www.linux-projects.org/uv4l/tutorials/webrtc-data-channels/");
+      self.track_data_channel(client_id, e.channel);
     };
 
     // 5. Try to connect
@@ -139,14 +168,17 @@ function KillbotServer(url, onReady) {
   self.setupRouting = function () {
     self.server.onmessage = function (e) {
       var message = JSON.parse(e.data);
-      var what = message.what
-      var to = message.to_client_id
+      var what = message.what;
+      var to = message.to;
 
       console.log("RECEIVED: "+e.data);
 
       // Make sure it was meant for us
-      if (is_defined(to) && to != self.my_id) {
-        console.log(`We (${self.my_id}) accidentally got a message meant for ${to}`);
+      if (is_defined(to) && is_defined(self.my_id) && to != self.my_id) {
+        console.log(`We (${self.my_id}) accidentally got a message meant for ${to}:`);
+        console.log(self.my_id);
+        console.log(message.to);
+        console.log(message);
         return;
       }
 
@@ -307,7 +339,6 @@ function KillbotServer(url, onReady) {
   };
 
   self.set_my_id = function (id) {
-    console.log("My id is: "+id);
     self.my_id = id;
     
     // Are we ready to start?
@@ -318,7 +349,6 @@ function KillbotServer(url, onReady) {
   };
 
   self.set_robot_id = function(id) {
-    console.log("Robot id is: "+id);
     self.robot_id = id;
     
     // Are we ready to start?
@@ -326,6 +356,20 @@ function KillbotServer(url, onReady) {
       self.ready = true;
       self.onReady();
     }
+  };
+
+  self.track_stream = function (client_id, stream) {
+    if (! is_defined(self.ids_to_streams[client_id])) {
+      self.ids_to_streams[client_id] = [];
+    }
+    self.ids_to_streams[client_id].push(stream);
+  };
+
+  self.track_data_channel = function (client_id, data_channel) {
+    if (! is_defined(self.ids_to_data_channels[client_id])) {
+      self.ids_to_data_channels[client_id] = [];
+    }
+    self.ids_to_data_channels[client_id].push(data_channel);
   };
 
   // Initialize

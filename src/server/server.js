@@ -126,7 +126,7 @@ function onMessage(client, data) {
 }
 
 function onConnection(connection) {
-  console.log('Made connection: ');
+  console.log('MADE CONNECTION');
 }
 
 wss.on('connection', function(ws) {
