@@ -9,7 +9,13 @@ var controlled_by_id;
 // Utils //
 ///////////
 function is_defined(v) {
-  return typeof v != "undefined";
+  if (typeof v === "undefined") {
+    return false;
+  } else if (v === null) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 function send(ws, request) {
@@ -25,8 +31,6 @@ function handle_id_received(message) {
 }
 
 function handle_signal_from_server(message) {
-  console.log("Received from server: ");
-  console.log(message);
   if (is_defined(message.to) && is_defined(message.from)) {
     // Decide who's controlling us
     if (! is_defined(controlled_by_id)) {
@@ -35,11 +39,19 @@ function handle_signal_from_server(message) {
 
     // Make sure no one else is trying to control us
     if (message.from != controlled_by_id) {
-      console.log("Got a message from client "+message.from+" but controlled by "+controlled_by_id);
+      console.log(
+        "Got a message from client "
+        + message.from
+        + " but controlled by "
+        + controlled_by_id);
     }
   } else {
     console.log("Insufficient routing info for message: ");
     console.log(message);
+  }
+  if (message.what == "hangup") {
+    console.log("Hanging up.");
+    controlled_by_id = null;
   }
   send(uv4l_ws, message);
 }
@@ -64,6 +76,10 @@ uv4l_ws.on("error", function error(e) {
   console.log("Error connecting to uv4l WebSocket: "+e);
 });
 
+uv4l_ws.on("close", function close() {
+  console.log("Disconnected from UV4L");
+});
+
 uv4l_ws.on("open", function open() {
   console.log("Connected to uv4l WebSocket");
   
@@ -73,6 +89,10 @@ uv4l_ws.on("open", function open() {
   
   server_ws.on("error", function error(e) {
     console.log("Error connecting to our WebSocket: "+e);
+  });
+
+  server_ws.on("close", function close() {
+    console.log("Disconnected from our WebSocket");
   });
 
   server_ws.on("open", function open() {
@@ -85,11 +105,13 @@ uv4l_ws.on("open", function open() {
       console.log("RECEIVED FROM UV4L:");
       console.log(structured);
       switch (structured.what) {
+        case 'hangup':
         case "call":
         case "offer":
         case "answer":
         case "iceCandidate":
         case "iceCandidates":
+        case 'addIceCandidate':
           handle_signal_from_uv4l(structured);
           break;
         default:
@@ -109,11 +131,13 @@ uv4l_ws.on("open", function open() {
           my_id = structured.data
           send(server_ws, {what: "i_am_robot"});
           break;
+        case 'hangup':
         case "call":
         case "offer":
         case "answer":
         case "iceCandidate":
         case "iceCandidates":
+        case 'addIceCandidate':
           handle_signal_from_server(structured);
           break;
         default:

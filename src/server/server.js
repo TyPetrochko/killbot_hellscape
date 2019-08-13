@@ -7,7 +7,13 @@ const HTTPS_PORT = process.env.PORT || 8443;
 
 // Util
 function is_defined(v) {
-  return typeof v != "undefined";
+  if (typeof v === "undefined") {
+    return false;
+  } else if (v === null) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 // Web server
@@ -105,11 +111,13 @@ function onMessage(client, data) {
       // client.send(JSON.stringify({'what': 'set_robot_id', 'data': robot_id}));
       send(clients_to_ids[client], {what: "set_robot_id", data: robot_id});
       break;
+    case 'hangup':
     case 'call':
     case 'offer':
     case 'answer':
     case 'iceCandidate':
     case 'iceCandidates':
+    case 'addIceCandidate':
       if (is_defined(message.to) && is_defined(message.from)) {
         send(message.to, message);
       } else {

@@ -74,18 +74,9 @@ function KillbotServer(url, onReady) {
   };
 
   self.stop = function() {
+    self.send_to_client({what: "hangup"}, self.robot_id);
     Object.keys(self.ids_to_peers).forEach(function (id) {
-      if (is_defined(self.ids_to_streams[id])) {
-        self.ids_to_streams[id].close();
-        self.ids_to_streams[id] = null;
-      }
-      if (is_defined(self.ids_to_data_channels[id])) {
-        self.ids_to_data_channels[id].close();
-        self.ids_to_data_channels[id] = null;
-      }
-      ids_to_peers[id].close();
-      ids_to_peers[id] = null;
-      ids_to_ice_candidates[id] = null;
+      self.purge_client_id(id);
     });
   };
   
@@ -371,6 +362,34 @@ function KillbotServer(url, onReady) {
     }
     self.ids_to_data_channels[client_id].push(data_channel);
   };
+
+  self.purge_client_id = function(id) {
+    if (is_defined(self.ids_to_streams[id])) {
+      self.ids_to_streams[id].forEach(function(stream) {
+        // Adapted from Official UV4L examples
+        try {
+          if (stream.getVideoTracks().length)
+            stream.getVideoTracks()[0].stop();
+          if (stream.getAudioTracks().length)
+            stream.getAudioTracks()[0].stop();
+          stream.stop(); // deprecated
+        } catch (e) {
+          for (var i = 0; i < stream.getTracks().length; i++)
+            stream.getTracks()[i].stop();
+        }
+      });
+      self.ids_to_streams[id] = null;
+    }
+    if (is_defined(self.ids_to_data_channels[id])) {
+      self.ids_to_data_channels[id].forEach(function(channel) {
+        channel.close();
+      });
+      self.ids_to_data_channels[id] = null;
+    }
+    self.ids_to_peers[id].close();
+    self.ids_to_peers[id] = null;
+    self.ids_to_ice_candidates[id] = null;
+  }
 
   // Initialize
   self.init();

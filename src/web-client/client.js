@@ -3,6 +3,7 @@ const URL = "wss://" + window.location.hostname + ":" + HTTPS_PORT;
 
 var killbotServer;
 var streamButton;
+var stopButton;
 var videoPlayer;
 
 function start () {
@@ -24,9 +25,11 @@ function stop () {
 }
 
 function setup () {
+  stopButton = document.getElementById("stopButton");
   streamButton = document.getElementById("streamButton");
   videoPlayer = document.getElementById("video-player");
   streamButton.onclick = start; 
+  stopButton.onclick = stop;
 }
 
 
