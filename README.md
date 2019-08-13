@@ -25,7 +25,7 @@
 
 # TODO
 * When web client disconnects from web server, it should automatically hangup
-  * DONE but needs debugging
+  * Handle "Hangup" disconnecting ras-client from UV4L!
 * E2E Test
 * Add control layer with data channels
 * Clean server-side code
