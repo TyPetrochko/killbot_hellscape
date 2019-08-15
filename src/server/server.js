@@ -1,10 +1,9 @@
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 
-const HTTPS_PORT = process.env.PORT || 8443;
+const PORT = process.env.PORT || 12345;
 
 // Util
 function is_defined(v) {
@@ -17,16 +16,7 @@ function is_defined(v) {
   }
 }
 
-// Web server
-// server = http.createServer(function(request, response) {
-//   response.writeHead(200, {"Content-Type": "text/plain"});
-//   response.end("Hello world!\n");
-// }).listen(process.env.PORT);
-
 server = http.createServer(function(request, response) {
-  console.log("Got a request:");
-  console.log(request.url);
-  console.log(request);
   if(request.url === '/') {
     response.writeHead(200, {'Content-Type': 'text/html'});
     response.end(fs.readFileSync('src/web-client/index.html'));
@@ -43,7 +33,7 @@ server = http.createServer(function(request, response) {
 const wss = new WebSocketServer({server});
 
 // TODO: Make this reflect actual hostname
-console.log("Web server is running! Check it out at https://192.168.1.22:"+HTTPS_PORT);
+console.log("Web server is running! Check it out at http://192.168.1.22:"+PORT);
 
 // Which client is our robot?
 var robot_id = -1; // TODO remove test default value
@@ -150,5 +140,5 @@ wss.on('connection', function(ws) {
   });
 });
 
-server.listen(HTTPS_PORT, '0.0.0.0')
+server.listen(PORT, '0.0.0.0')
 

@@ -1,5 +1,6 @@
-const HTTPS_PORT = 8443;
-const URL = "wss://" + window.location.hostname + ":" + HTTPS_PORT;
+// const HTTPS_PORT = 8443;
+// const URL = "ws://" + window.location.hostname + ":" + HTTPS_PORT;
+const URL = "ws://" + location.hostname+(location.port ? ':'+location.port: '');
 
 var killbotServer;
 var streamButton;

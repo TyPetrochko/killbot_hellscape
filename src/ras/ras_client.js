@@ -1,4 +1,5 @@
 const WebSocket = require("ws")
+const server_url = process.argv[2]
 
 var my_id;
 var uv4l_ws;
@@ -87,7 +88,6 @@ function start() {
   uv4l_ws.on("close", function close() {
     console.log("Disconnected from UV4L. Retrying in 3 seconds.");
     close_ws_if_open(server_ws);
-    // setTimeout(start, 1000);
     start();
   });
 
@@ -95,7 +95,9 @@ function start() {
     console.log("Connected to uv4l WebSocket");
     
     // 2. Connect to our signaling server
-    const server_url = "wss://192.168.1.22:8443" // Testing locally
+    // const server_url = "ws://192.168.1.22:8443" // Testing locally
+    // const server_url = "wss://killbot-hellscape.herokuapp.com:";
+    console.log("Connecting to signaling server: "+server_url);
     server_ws = new WebSocket(server_url, {rejectUnauthorized:false});
     
     server_ws.on("error", function error(e) {
