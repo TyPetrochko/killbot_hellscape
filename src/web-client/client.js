@@ -8,10 +8,12 @@ var videoPlayer;
 
 function start () {
   streamButton.disabled = true;
+  stopButton.disabled = false;
   killbotServer = new KillbotServer(URL, function onReady() {
     console.log("Killbot Server is ready!");
     killbotServer.connectToRobot({
       onStream: function(stream) {
+        console.log("Received a video stream!");
         videoPlayer.srcObject = stream;
       },
       onClose: function() {alert("Closed connection...");},
@@ -22,6 +24,9 @@ function start () {
 
 function stop () {
   killbotServer.stop();
+  videoPlayer.srcObject = null;
+  streamButton.disabled = false;
+  stopButton.disabled = true;
 }
 
 function setup () {
@@ -30,6 +35,7 @@ function setup () {
   videoPlayer = document.getElementById("video-player");
   streamButton.onclick = start; 
   stopButton.onclick = stop;
+  stopButton.disabled = true;
 }
 
 
