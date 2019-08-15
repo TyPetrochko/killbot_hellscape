@@ -1,3 +1,4 @@
+const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const WebSocket = require('ws');
@@ -17,6 +18,12 @@ function is_defined(v) {
 }
 
 // Web server
+server = http.createServer(function(request, response) {
+  response.writeHead(200, {"Content-Type": "text/plain"});
+  response.end("Hello world!\n");
+}).listen(process.env.PORT);
+
+/*
 server = https.createServer(serverConfig = {
     key: fs.readFileSync('certificates/key.pem'),
     cert: fs.readFileSync('certificates/cert.pem'),
@@ -148,4 +155,5 @@ wss.on('connection', function(ws) {
 });
 
 server.listen(HTTPS_PORT, '0.0.0.0')
+*/
 
