@@ -22,11 +22,10 @@
     * DONE
   * Call robot id
     * DONE
+* When web client disconnects from web server, it should automatically hangup
+  * DONE
 
 # TODO
-* When web client disconnects from web server, it should automatically hangup
-  * Handle "Hangup" disconnecting ras-client from UV4L!
-  * This requires a rewrite
 * E2E Test
 * Add control layer with data channels
 * Clean server-side code
@@ -34,6 +33,8 @@
 * Allow users to specify connection options (quality, hardware codec, etc.)
 * Support 1:n broadcasting
 * Support resetting robot / no robot available
+* Consider migrating to https://github.com/mpromonet/webrtc-streamer
+* Consider migrating to https://github.com/kclyu/rpi-webrtc-streamer
 
 # API
 ```javascript
