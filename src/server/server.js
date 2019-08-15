@@ -21,6 +21,9 @@ server = https.createServer(serverConfig = {
     key: fs.readFileSync('certificates/key.pem'),
     cert: fs.readFileSync('certificates/cert.pem'),
 }, function(request, response) {
+  console.log("Got a request:");
+  console.log(request.url);
+  console.log(request);
   if(request.url === '/') {
     response.writeHead(200, {'Content-Type': 'text/html'});
     response.end(fs.readFileSync('src/web-client/index.html'));
