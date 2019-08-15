@@ -26,6 +26,8 @@
   * DONE
 
 # TODO
+* Debug open video stream yet no video
+  * Different options in config? Lower quality?
 * E2E Test
 * Add control layer with data channels
 * Clean server-side code
