@@ -4,6 +4,9 @@ server:
 serverwithlogs:
 	node src/server/server.js > /tmp/server_logs.txt
 
+rasclientheroku:
+	node src/ras/ras_client.js ws://killbot-hellscape.herokuapp.com
+
 rasclient:
 	node src/ras/ras_client.js ws://192.168.1.22:12345
 

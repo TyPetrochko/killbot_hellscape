@@ -1,6 +1,8 @@
-// const HTTPS_PORT = 8443;
-// const URL = "ws://" + window.location.hostname + ":" + HTTPS_PORT;
-const URL = "ws://" + location.hostname+(location.port ? ':'+location.port: '');
+// Author: Tyler Petrochko
+//
+const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+const port_suffix = location.port ? ':'+location.port: '';
+const URL = protocol + location.hostname + port_suffix;
 
 var killbotServer;
 var streamButton;
