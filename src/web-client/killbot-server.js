@@ -146,7 +146,7 @@ function KillbotServer(url, onReady) {
       what: "call",
       options: {
         // See https://www.linux-projects.org/documentation/uv4l-server/
-        force_hw_vcodec: false, // TODO Let users toggle this
+        force_hw_vcodec: true, // TODO Let users toggle this
         vformat: 60,
         trickle_ice: true
       }
