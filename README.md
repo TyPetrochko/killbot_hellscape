@@ -24,12 +24,15 @@
     * DONE
 * When web client disconnects from web server, it should automatically hangup
   * DONE
+* Debug open video stream yet no video
+  * DONE
+* E2E Test
+  * DONE
+* Add control layer with data channels
+  * DONE
 
 # TODO
-* Debug open video stream yet no video
-  * Different options in config? Lower quality?
-* E2E Test
-* Add control layer with data channels
+* Implement receive callback in Killbot API
 * Clean server-side code
 * Clean ras-client code
 * Allow users to specify connection options (quality, hardware codec, etc.)

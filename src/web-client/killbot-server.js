@@ -79,6 +79,16 @@ function KillbotServer(url, onReady) {
       self.purge_client_id(id);
     });
   };
+
+  self.send = function(data) {
+    channels = self.ids_to_data_channels[self.robot_id];
+    if (! is_defined(channels) || channels.length == 0) {
+      console.log("No data channel, can't send data!");
+      return;
+    }
+
+    channels[0].send(data);
+  };
   
   /////////////////////
   // Low-level Impl. //
@@ -357,6 +367,9 @@ function KillbotServer(url, onReady) {
   };
 
   self.track_data_channel = function (client_id, data_channel) {
+    data_channel.onmessage = function(e) {
+      alert(e.data);
+    }
     if (! is_defined(self.ids_to_data_channels[client_id])) {
       self.ids_to_data_channels[client_id] = [];
     }

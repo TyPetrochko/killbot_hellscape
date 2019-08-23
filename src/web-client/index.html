@@ -10,7 +10,18 @@
   <body>
     <h1> Killbot Hellscape </h1>
     <video id="video-player" autoplay width="640" height="480" muted style="width: 1200px; height: 720px"></video>
+    </br>
     <input type="button" id="streamButton" value="Stream From Robot"></input>
     <input type="button" id="stopButton" value="Stop"></input>
+    </br>
+    <div id="sendReceivePanel" style="visibility: hidden">
+      <textarea rows="4" cols="50" disabled=true></textarea>
+      </br>
+      <form>
+        <input type="text" id="messageText" size="25" placeholder="Send a message...">
+        <input type="button" id="sendButton" value="Send"></input>
+      </form>
+    </div>
+
   </body>
 </html>
