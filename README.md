@@ -33,6 +33,8 @@
 
 # TODO
 * Implement receive callback in Killbot API
+* Implement fullscreen
+* Clean up UI
 * Clean server-side code
 * Clean ras-client code
 * Allow users to specify connection options (quality, hardware codec, etc.)
