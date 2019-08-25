@@ -2,6 +2,9 @@ import socket
 import time
 import os
 import sys
+import control
+
+control.init()
 
 socket_path = '/tmp/uv4l.socket'
 if len(sys.argv) > 1:
@@ -27,6 +30,7 @@ while True:
         print(f"Got data: {data}")
         if not data:
             break
+        control.process(data)
         connection.sendall(data)
 
 
