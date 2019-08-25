@@ -36,6 +36,12 @@ function KillbotServer(url, onReady) {
     self.my_id = null;
     self.robot_id = null;
 
+    // User will provide these callbacks when they connect
+    self.on_stream = function () {};
+    self.on_close = function () {};
+    self.on_data = function () {};
+    self.on_error = function () {};
+
     self.server.onopen = function (e) {
       self.setupRouting();
       self.onReady = onReady;
@@ -51,26 +57,24 @@ function KillbotServer(url, onReady) {
   
   self.connectToRobot = function (conf) {
     console.log("Connecting to robot id: "+self.robot_id);
-    on_stream = conf.onStream || function (s) {};
-    on_close = conf.onClose || function () {};
-    on_error = conf.onError || function(err) {};
+    self.on_stream = conf.onStream || function () {};
+    self.on_close = conf.onClose || function () {};
+    self.on_data = conf.onData || function () {};
+    self.on_error = conf.onError || function (e) {
+      console.log("Error: " + e);
+    };
 
     if (! self.ready) {
-      console.log("Killbot Server is not ready yet!");
+      self.on_error("Killbot Server is not ready yet!");
       return;
     }
 
     if (! is_defined(self.robot_id)) {
-      console.log("No robot connected!");
+      self.on_error("No robot connected!");
       return;
     }
     
-    self.stream_from({
-      client_id: self.robot_id,
-      on_stream: on_stream,
-      on_close: on_close,
-      on_error: on_error,
-    })
+    self.stream_from(self.robot_id)
   };
 
   self.stop = function() {
@@ -83,7 +87,7 @@ function KillbotServer(url, onReady) {
   self.send = function(data) {
     channels = self.ids_to_data_channels[self.robot_id];
     if (! is_defined(channels) || channels.length == 0) {
-      console.log("No data channel, can't send data!");
+      self.on_error("No data channel, can't send data!");
       return;
     }
 
@@ -94,12 +98,7 @@ function KillbotServer(url, onReady) {
   // Low-level Impl. //
   /////////////////////
   
-  self.stream_from = function(conf) {
-    client_id = conf.client_id
-    on_stream = conf.on_stream
-    on_hangup = conf.on_hangup
-    on_error = conf.on_error
-
+  self.stream_from = function(client_id) {
     // 1. Make a new peer
     var config = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]};
     var options = {optional: []};
@@ -130,14 +129,13 @@ function KillbotServer(url, onReady) {
     if ('ontrack' in pc) {
       pc.ontrack = function (e) {
         console.log("Got remote stream!");
-        on_stream(e.streams[0]);
-
+        self.on_stream(e.streams[0]);
         self.track_stream(client_id, e.streams[0]);
       };
     } else {  // onaddstream() deprecated
         console.log("Got remote stream! (Deprecated version)");
         pc.onaddstream = function (e) {
-          on_stream(e.stream);
+          self.on_stream(e.stream);
       };
     }
 
@@ -176,7 +174,7 @@ function KillbotServer(url, onReady) {
 
       // Make sure it was meant for us
       if (is_defined(to) && is_defined(self.my_id) && to != self.my_id) {
-        console.log(`We (${self.my_id}) accidentally got a message meant for ${to}:`);
+        self.on_error(`We (${self.my_id}) accidentally got a message meant for ${to}:`);
         console.log(self.my_id);
         console.log(message.to);
         console.log(message);
@@ -204,8 +202,7 @@ function KillbotServer(url, onReady) {
           self.set_robot_id(message.data);
           break;
         default:
-          console.log("Bad message type:");
-          console.log(message);
+          self.on_error("Bad message type: " + message);
       };
     };
   }
@@ -220,7 +217,7 @@ function KillbotServer(url, onReady) {
     console.log("Sending request to "+client_id+":");
     console.log(request);
     if (! is_defined(self.my_id)) {
-      console.log("Can't send without an id... Aborting.");
+      self.on_error("Can't send without an id... Aborting.");
       return;
     }
 
@@ -232,7 +229,7 @@ function KillbotServer(url, onReady) {
   self.handle_offer = function (message) {
     peer = self.ids_to_peers[message.from];
     if (! peer) {
-      console.log("Unknown peer: "+message.from);
+      self.on_error("Unknown peer: "+message.from);
       return;
     }
     var mediaConstraints = {
@@ -256,11 +253,11 @@ function KillbotServer(url, onReady) {
           };
           self.send_to_client(request, message.from);
         }, function (error) {
-            onError("failed to create answer: " + error);
+            self.on_error("failed to create answer: " + error);
         }, mediaConstraints);
       },
       function onRemoteSdpError(e) {
-        console.log("Got error connecting, something is broken: "+e);
+        self.on_error("Got error connecting, something is broken: "+e);
       },
     );
   };
@@ -269,7 +266,7 @@ function KillbotServer(url, onReady) {
   self.handle_ice_candidate = function (message) {
     peer = self.ids_to_peers[message.from];
     if (! peer) {
-      console.log("Unknown peer: "+message.from);
+      self.on_error("Unknown peer: "+message.from);
       return;
     }
     if (! message.data) {
@@ -297,7 +294,7 @@ function KillbotServer(url, onReady) {
   self.handle_ice_candidates = function (message) {
     peer = self.ids_to_peers[message.from];
     if (! is_defined(peer)) {
-      console.log("Unknown peer: "+message.from);
+      self.on_error("Unknown peer: " + message.from);
       return;
     }
     
@@ -323,7 +320,7 @@ function KillbotServer(url, onReady) {
     candidates = self.ids_to_ice_candidates[peer_id];
 
     if (! is_defined(peer)) {
-      console.log("Peer "+peer_id+" does not exist");
+      self.on_error("Peer "+peer_id+" does not exist");
       return;
     }
 
@@ -333,7 +330,7 @@ function KillbotServer(url, onReady) {
           console.log("Candidate added: "+JSON.stringify(candidate));
         }, 
         function(err){
-          console.log("Could not add candidate "+JSON.stringify(candidate)+": "+err);
+          self.on_error("Could not add candidate "+JSON.stringify(candidate)+": "+err);
         }
       );
     });
@@ -368,7 +365,7 @@ function KillbotServer(url, onReady) {
 
   self.track_data_channel = function (client_id, data_channel) {
     data_channel.onmessage = function(e) {
-      alert(e.data);
+      self.on_data(e.data);
     }
     if (! is_defined(self.ids_to_data_channels[client_id])) {
       self.ids_to_data_channels[client_id] = [];

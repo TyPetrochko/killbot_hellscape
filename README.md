@@ -30,10 +30,16 @@
   * DONE
 * Add control layer with data channels
   * DONE
+* Debug send/receive data
+  * DONE
+* Implement receive callback in Killbot API
+  * DONE
+* Implement fullscreen
+  * DONE
+* Implement key press events
+  * DONE
 
 # TODO
-* Implement receive callback in Killbot API
-* Implement fullscreen
 * Clean up UI
 * Clean server-side code
 * Clean ras-client code

@@ -7,9 +7,11 @@ const URL = protocol + location.hostname + port_suffix;
 var killbotServer;
 var streamButton;
 var stopButton;
+var fullscreenButton;
 var sendButton;
 var videoPlayer;
 var sendReceivePanel;
+var log;
 
 function start () {
   streamButton.disabled = true;
@@ -21,8 +23,13 @@ function start () {
         console.log("Received a video stream!");
         videoPlayer.srcObject = stream;
       },
-      onClose: function() {alert("Closed connection...");},
-      onError: function(e) {alert("Got error: "+e);},
+      onClose: function () {alert("Closed connection...");},
+      onError: function (e) {alert("Got error: "+e);},
+      onData: function (data) {
+        // Always leave trailing newline
+        console.log(data);
+        log.value = (log.value || "") + data + "\n"
+      }
     });
   });
 
@@ -47,20 +54,44 @@ function send() {
   field.value = "";
 }
 
-function receive(data) {
-  alert(data);
+function goFullscreen() {
+  console.log("Going fullscreen...");
+  if (videoPlayer.requestFullScreen) {
+    videoPlayer.requestFullScreen();
+  } else if (videoPlayer.webkitRequestFullScreen) {
+    videoPlayer.webkitRequestFullScreen();
+  } else if (videoPlayer.mozRequestFullScreen) {
+    videoPlayer.mozRequestFullScreen();
+  }
+}
+
+function keydown (e) {
+  console.log("keydown");
+  console.log(e);
+}
+
+function keyup (e) {
+  console.log("keyup");
+  console.log(e);
 }
 
 function setup () {
   stopButton = document.getElementById("stopButton");
   sendButton = document.getElementById("sendButton");
   streamButton = document.getElementById("streamButton");
+  fullscreenButton = document.getElementById("fullscreenButton");
   videoPlayer = document.getElementById("video-player");
   sendReceivePanel = document.getElementById("sendReceivePanel");
+  log = document.getElementById("log");
   sendButton.onclick = send;
   streamButton.onclick = start; 
   stopButton.onclick = stop;
+  fullscreenButton.onclick = goFullscreen;
   stopButton.disabled = true;
+
+  window.addEventListener('keydown', keydown, true);
+  window.addEventListener('keyup', keyup, true);
+
 }
 
 
