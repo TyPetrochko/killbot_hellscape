@@ -42,6 +42,9 @@
   * DONE
 
 # TODO
+* Debug broken D key
+* Debug why ras client loses connection to UV4L socket
+* Debug latency issues
 * Read hardware docs & setup blinking light LED
 * Clean up UI
 * Clean server-side code
