@@ -42,6 +42,7 @@
   * DONE
 
 # TODO
+* Read hardware docs & setup blinking light LED
 * Clean up UI
 * Clean server-side code
 * Clean ras-client code
