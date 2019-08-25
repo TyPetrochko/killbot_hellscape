@@ -1,6 +1,6 @@
 ## Killbot Hellscape
 
-![Image of Yaktocat](https://imgs.xkcd.com/comics/the_three_laws_of_robotics_2x.png)
+![XKCD Killbot Hellscape](https://imgs.xkcd.com/comics/the_three_laws_of_robotics_2x.png)
 
 # DONE
 * Cloud Server
@@ -37,6 +37,8 @@
 * Implement fullscreen
   * DONE
 * Implement key press events
+  * DONE
+* Control axes
   * DONE
 
 # TODO

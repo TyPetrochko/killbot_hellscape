@@ -59,7 +59,7 @@ function KillbotServer(url, onReady) {
     console.log("Connecting to robot id: "+self.robot_id);
     self.on_stream = conf.onStream || function () {};
     self.on_close = conf.onClose || function () {};
-    self.on_data = conf.onData || function () {};
+    self.on_data_channel = conf.onDataChannel || function () {};
     self.on_error = conf.onError || function (e) {
       console.log("Error: " + e);
     };
@@ -82,16 +82,6 @@ function KillbotServer(url, onReady) {
     Object.keys(self.ids_to_peers).forEach(function (id) {
       self.purge_client_id(id);
     });
-  };
-
-  self.send = function(data) {
-    channels = self.ids_to_data_channels[self.robot_id];
-    if (! is_defined(channels) || channels.length == 0) {
-      self.on_error("No data channel, can't send data!");
-      return;
-    }
-
-    channels[0].send(data);
   };
   
   /////////////////////
@@ -325,6 +315,8 @@ function KillbotServer(url, onReady) {
     }
 
     candidates.forEach(function(candidate) {
+      console.log("ADDING CANDIDATE: ");
+      console.log(candidate);
       peer.addIceCandidate(candidate, 
         function(){
           console.log("Candidate added: "+JSON.stringify(candidate));
@@ -364,9 +356,7 @@ function KillbotServer(url, onReady) {
   };
 
   self.track_data_channel = function (client_id, data_channel) {
-    data_channel.onmessage = function(e) {
-      self.on_data(e.data);
-    }
+    self.on_data_channel(data_channel);
     if (! is_defined(self.ids_to_data_channels[client_id])) {
       self.ids_to_data_channels[client_id] = [];
     }
