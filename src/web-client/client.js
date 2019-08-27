@@ -117,6 +117,7 @@ function start () {
           log.scrollTop = log.scrollHeight;
         };
         channel.onclose = function() {
+          console.log("Data channel closed");
           dataChannel = null;
         }
         channel.onerror = function(e) {

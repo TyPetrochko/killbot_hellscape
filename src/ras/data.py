@@ -41,15 +41,20 @@ while True:
     print("Awaiting connection...")
     connection, address = s.accept()
 
-    print(f"Connected to address: {address}")
-    while True:
-        data = connection.recv(1024)
-        profile(data)
-        
-        if not data:
-            break
-        
-        control.process(data)
-        connection.sendall(data)
+    try:
+        print(f"Connected to address: {address}")
+        while True:
+            data = connection.recv(1024)
+            profile(data)
+            
+            if not data:
+                break
+            
+            control.process(data)
+            connection.sendall(data)
+    except Exception as e:
+        print(f"Got exception reading from UV4l Unix Socket: {e}")
+    finally:
+        connection.close()
 
 

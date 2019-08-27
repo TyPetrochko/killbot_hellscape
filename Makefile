@@ -16,5 +16,8 @@ rasclientwithlogs:
 control:
 	python3 src/ras/data.py
 
+logs:
+	tail -f /var/log/syslog
+
 restart:
 	sudo service uv4l_raspicam restart
