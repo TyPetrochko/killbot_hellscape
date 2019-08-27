@@ -22,6 +22,7 @@ def process(raw):
         data = json.loads(raw)
     except Exception:
         print(f"Couldn't parse: {raw}")
+        return
 
     if ("shift" in data and data["shift"]):
         blinkOn()

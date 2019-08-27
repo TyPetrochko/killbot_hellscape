@@ -106,6 +106,7 @@ function start() {
 
     server_ws.on("close", function close() {
       console.log("Disconnected from our WebSocket. Retrying...");
+      uv4l_ws.close();
     });
 
     server_ws.on("open", function open() {

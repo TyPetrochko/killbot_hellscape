@@ -3,6 +3,7 @@
 const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 const port_suffix = location.port ? ':'+location.port: '';
 const URL = protocol + location.hostname + port_suffix;
+const METRICS_POLLING_MS = 1000;
 
 var killbotServer;
 var streamButton;
@@ -76,9 +77,11 @@ function setAxes () {
   }
 }
 
+var bytes_sent = 0
 function send(data) {
   if (dataChannel && dataChannel.readyState == "open") {
     dataChannel.send(data);
+    bytes_sent += data.length
   }
 }
 
@@ -95,9 +98,21 @@ function start () {
       onClose: function () {alert("Closed connection...");},
       onError: function (e) {alert("Got error: " + e);},
       onDataChannel: function (channel) {
+        // TODO: remove
+        // Log some settings
+        console.log("Got a data channel:");
+        console.log(channel);
+        console.log("Ordered=" + channel.ordered);
+        console.log("Max retransmits=" + channel.maxRetransmits);
+        console.log("Max packet lifetime=" + channel.maxPacketLifeTime);
+        console.log("Buffer low threshold=" + channel.bufferedAmountLowThreshold);
+        console.log("Negotiated=" + channel.negotiated);
+        channel.onbufferedamountlow = function() {
+          // Do nothing
+        };
+        // End debugging portion
         dataChannel = channel;
         channel.onmessage = function(e) {
-          console.log(e.data);
           log.value = (log.value || "") + e.data + "\n"
           log.scrollTop = log.scrollHeight;
         };
@@ -142,22 +157,29 @@ function sendMessage() {
 }
 
 function keydown (e) {
-  console.log("DOWN: " + e.code);
   keys[e.code] = true;
 }
 
 function keyup (e) {
-  console.log("UP: " + e.code);
   keys[e.code] = false;
 }
 
 // Main control loop - dt is "time since last call"
+var last_metrics_update = (new Date()).getTime();
 function update (dt) {
-  console.log("Update: " + dt);
   setAxes();
 
   if(dataChannel && dataChannel.readyState == "open") {
     send(JSON.stringify(axes));
+  }
+
+  // Print profiling info
+  time = (new Date()).getTime();
+  if (time - last_metrics_update > METRICS_POLLING_MS) {
+    bytes_per_second = (bytes_sent / (time - last_metrics_update)) * 1000;
+    bytes_sent = 0;
+    last_metrics_update = time;
+    console.log("Bytes/second: " + bytes_per_second);
   }
 }
 
