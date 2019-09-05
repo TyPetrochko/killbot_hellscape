@@ -85,6 +85,13 @@ function send(data) {
   }
 }
 
+var bytes_received = 0
+function receive(data) {
+  log.value = (log.value || "") + data + "\n"
+  log.scrollTop = log.scrollHeight;
+  bytes_received += data.length
+}
+
 function start () {
   streamButton.disabled = true;
   stopButton.disabled = false;
@@ -113,8 +120,7 @@ function start () {
         // End debugging portion
         dataChannel = channel;
         channel.onmessage = function(e) {
-          log.value = (log.value || "") + e.data + "\n"
-          log.scrollTop = log.scrollHeight;
+          receive(e.data)
         };
         channel.onclose = function() {
           console.log("Data channel closed");
@@ -177,10 +183,13 @@ function update (dt) {
   // Print profiling info
   time = (new Date()).getTime();
   if (time - last_metrics_update > METRICS_POLLING_MS) {
-    bytes_per_second = (bytes_sent / (time - last_metrics_update)) * 1000;
+    bytes_sent_per_second = (bytes_sent / (time - last_metrics_update)) * 1000;
+    bytes_recv_per_second = (bytes_received / (time - last_metrics_update)) * 1000;
     bytes_sent = 0;
+    bytes_received = 0;
     last_metrics_update = time;
-    console.log("Bytes/second: " + bytes_per_second);
+    console.log("Bytes sent/second: " + bytes_sent_per_second);
+    console.log("Bytes recv/second: " + bytes_recv_per_second);
   }
 }
 

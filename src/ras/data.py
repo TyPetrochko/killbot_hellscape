@@ -53,7 +53,7 @@ while True:
             control.process(data)
             connection.sendall(data)
     except Exception as e:
-        print(f"Got exception reading from UV4l Unix Socket: {e}")
+        print(f"Got exception reading from UV4L Unix Socket: {e}")
     finally:
         connection.close()
 

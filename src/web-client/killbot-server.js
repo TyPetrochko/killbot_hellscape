@@ -139,6 +139,12 @@ function KillbotServer(url, onReady) {
       self.track_data_channel(client_id, e.channel);
     };
 
+    pc.oniceconnectionstatechange = function() {
+      if(pc.iceConnectionState == 'disconnected') {
+        console.log('Stream disconnected');
+      }
+    }
+
     // 5. Try to connect
     var request = {
       what: "call",
