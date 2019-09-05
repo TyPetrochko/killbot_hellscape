@@ -5,7 +5,7 @@
 //
 
 // See https://www.linux-projects.org/documentation/uv4l-server/
-QUALITY = 20
+QUALITY = 10
 
 function get_my_id(ws) {
   ws.send(JSON.stringify({what: "get_my_id"}));
