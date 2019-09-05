@@ -4,6 +4,7 @@ const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 const port_suffix = location.port ? ':'+location.port: '';
 const URL = protocol + location.hostname + port_suffix;
 const METRICS_POLLING_MS = 1000;
+const UPDATE_INTERVAL_MS = 2000;
 
 var killbotServer;
 var streamButton;
@@ -219,7 +220,7 @@ setInterval(function () {
   t2 = (new Date()).getTime();
   update(t2 - t);
   t = t2;
-}, 100);
+}, UPDATE_INTERVAL_MS);
 
 window.onload = setup;
 window.onbeforeunload = function () {

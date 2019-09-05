@@ -42,7 +42,6 @@
   * DONE
 
 # TODO
-* Debug broken D key
 * Debug why ras client loses connection to UV4L socket
 * Debug latency issues
 * Read hardware docs & setup blinking light LED
@@ -54,10 +53,12 @@
 * Support resetting robot / no robot available
 * Consider migrating to https://github.com/mpromonet/webrtc-streamer
 * Consider migrating to https://github.com/kclyu/rpi-webrtc-streamer
+  * Does not support data channels, see: 
+    https://github.com/kclyu/rpi-webrtc-streamer/issues/75
 
 Connection bug:
-* Suddenly, UV4L will close data channel:
-  * In one case,
+* Suddenly, UV4L will close data channel. Then it closes video stream.
+* ONLY happens when going over a network boundary.
 
 # API
 ```javascript
