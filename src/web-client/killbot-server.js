@@ -6,7 +6,7 @@
 
 // See https://www.linux-projects.org/documentation/uv4l-server/
 QUALITY = 10
-FORCE_HW_CODEC = true
+FORCE_HW_CODEC = false
 
 function get_my_id(ws) {
   ws.send(JSON.stringify({what: "get_my_id"}));

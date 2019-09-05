@@ -58,11 +58,18 @@
 
 Connection bug:
 * Suddenly, UV4L will close data channel. Then it closes video stream.
-* ONLY happens when going over a network boundary.
+* ONLY happens when hosting with heroku
 * Decreasing video resolution has no effect
   * However - there's also no decrease in resolution! I think we're overflowing
     our send buffers
 * Decreasing data channel send rate has no effect
+* Running ngrok is fine
+* I think this has to do with the signaling server!
+* To repro locally - kill the signaling server when running locally
+* Solution: MAKE the p2p connections survive signaling server dying
+* What talks to signaling server?
+  (1) Web client
+  (2) Ras client
 
 # API
 ```javascript
