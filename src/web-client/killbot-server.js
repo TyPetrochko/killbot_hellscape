@@ -6,6 +6,7 @@
 
 // See https://www.linux-projects.org/documentation/uv4l-server/
 QUALITY = 10
+FORCE_HW_CODEC = true
 
 function get_my_id(ws) {
   ws.send(JSON.stringify({what: "get_my_id"}));
@@ -152,7 +153,7 @@ function KillbotServer(url, onReady) {
     var request = {
       what: "call",
       options: {
-        force_hw_vcodec: false, // TODO Let users toggle this
+        force_hw_vcodec: FORCE_HW_CODEC, // TODO Let users toggle this
         vformat: QUALITY,
         trickle_ice: true
       }

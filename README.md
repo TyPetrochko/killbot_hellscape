@@ -59,6 +59,10 @@
 Connection bug:
 * Suddenly, UV4L will close data channel. Then it closes video stream.
 * ONLY happens when going over a network boundary.
+* Decreasing video resolution has no effect
+  * However - there's also no decrease in resolution! I think we're overflowing
+    our send buffers
+* Decreasing data channel send rate has no effect
 
 # API
 ```javascript

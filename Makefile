@@ -19,5 +19,8 @@ control:
 logs:
 	tail -f /var/log/syslog
 
+conf:
+	sudo vim /etc/uv4l/uv4l-raspicam.conf
+
 restart:
 	sudo service uv4l_raspicam restart
