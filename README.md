@@ -55,6 +55,10 @@
 * Consider migrating to https://github.com/mpromonet/webrtc-streamer
 * Consider migrating to https://github.com/kclyu/rpi-webrtc-streamer
 
+Connection bug:
+* Suddenly, UV4L will close data channel:
+  * In one case,
+
 # API
 ```javascript
 server = new KillbotServer(url, onReady = function () { ... });
