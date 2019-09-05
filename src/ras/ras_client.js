@@ -86,7 +86,8 @@ function start() {
   });
 
   uv4l_ws.on("close", function close() {
-    console.log("Disconnected from UV4L. Retrying in 3 seconds.");
+    t = (new Date()).getTime();
+    console.log(t+": Disconnected from UV4L Retrying in 3 seconds.");
     close_ws_if_open(server_ws);
     start();
   });

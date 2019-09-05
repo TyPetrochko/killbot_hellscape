@@ -48,6 +48,7 @@ while True:
             profile(data)
             
             if not data:
+                print(f"{time.time()*1000}: Disconnected from UV4L");
                 break
             
             control.process(data)

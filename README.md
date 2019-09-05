@@ -43,11 +43,14 @@
 
 # TODO
 * Debug why ras client loses connection to UV4L socket
+  * It's because Heroku doesn't allow idle connections
+  * See: https://devcenter.heroku.com/articles/websockets#timeouts
+  * Implement a keep-alive heartbeat
 * Debug latency issues
 * Read hardware docs & setup blinking light LED
 * Clean up UI
 * Clean server-side code
-* Clean ras-client code
+* Clean ras-client code (this is really bad)
 * Allow users to specify connection options (quality, hardware codec, etc.)
 * Support 1:n broadcasting
 * Support resetting robot / no robot available
@@ -55,21 +58,6 @@
 * Consider migrating to https://github.com/kclyu/rpi-webrtc-streamer
   * Does not support data channels, see: 
     https://github.com/kclyu/rpi-webrtc-streamer/issues/75
-
-Connection bug:
-* Suddenly, UV4L will close data channel. Then it closes video stream.
-* ONLY happens when hosting with heroku
-* Decreasing video resolution has no effect
-  * However - there's also no decrease in resolution! I think we're overflowing
-    our send buffers
-* Decreasing data channel send rate has no effect
-* Running ngrok is fine
-* I think this has to do with the signaling server!
-* To repro locally - kill the signaling server when running locally
-* Solution: MAKE the p2p connections survive signaling server dying
-* What talks to signaling server?
-  (1) Web client
-  (2) Ras client
 
 # API
 ```javascript
