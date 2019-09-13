@@ -229,7 +229,6 @@ function KillbotServer(url, onReady) {
   self.intervals_to_tasks = {
     1000: [
       function () {
-        console.log("Calling ping...");
         self.server.send(JSON.stringify({"what": "ping"}));
       }
     ],
