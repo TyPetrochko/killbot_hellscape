@@ -92,6 +92,9 @@ function onMessage(client, data) {
   }
 
   switch (message.what) {
+    case 'ping':
+      // Just a keep-alive message
+      break;
     case 'get_my_id':
       // Assign client their ID
       ids_to_clients[next_id] = client

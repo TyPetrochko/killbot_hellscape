@@ -4,7 +4,7 @@ const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 const port_suffix = location.port ? ':'+location.port: '';
 const URL = protocol + location.hostname + port_suffix;
 const METRICS_POLLING_MS = 1000;
-const UPDATE_INTERVAL_MS = 2000;
+const UPDATE_INTERVAL_MS = 100;
 
 var killbotServer;
 var streamButton;
@@ -33,6 +33,7 @@ var axes = {
   horizontal: 0.0,
   shift: false,
   space: false,
+  timestamp: 0,
 };
 
 function setAxes () {
@@ -76,21 +77,31 @@ function setAxes () {
   } else {
     axes["space"] = false;
   }
+  axes["timestamp"] = (new Date()).getTime();
 }
 
 var bytes_sent = 0
 function send(data) {
   if (dataChannel && dataChannel.readyState == "open") {
     dataChannel.send(data);
-    bytes_sent += data.length
+    bytes_sent += data.length;
   }
 }
 
-var bytes_received = 0
+var bytes_received = 0;
+var latency = -1;
 function receive(data) {
-  log.value = (log.value || "") + data + "\n"
+  log.value = (log.value || "") + data + "\n";
   log.scrollTop = log.scrollHeight;
-  bytes_received += data.length
+  bytes_received += data.length;
+
+  try {
+    parsed = JSON.parse(data)
+    if (parsed.timestamp) {
+      t = (new Date()).getTime();
+      latency = t - parsed.timestamp;
+    }
+  } catch (ex) {}
 }
 
 function start () {
@@ -106,19 +117,6 @@ function start () {
       onClose: function () {alert("Closed connection...");},
       onError: function (e) {alert("Got error: " + e);},
       onDataChannel: function (channel) {
-        // TODO: remove
-        // Log some settings
-        console.log("Got a data channel:");
-        console.log(channel);
-        console.log("Ordered=" + channel.ordered);
-        console.log("Max retransmits=" + channel.maxRetransmits);
-        console.log("Max packet lifetime=" + channel.maxPacketLifeTime);
-        console.log("Buffer low threshold=" + channel.bufferedAmountLowThreshold);
-        console.log("Negotiated=" + channel.negotiated);
-        channel.onbufferedamountlow = function() {
-          // Do nothing
-        };
-        // End debugging portion
         dataChannel = channel;
         channel.onmessage = function(e) {
           receive(e.data)
@@ -191,6 +189,7 @@ function update (dt) {
     last_metrics_update = time;
     console.log("Bytes sent/second: " + bytes_sent_per_second);
     console.log("Bytes recv/second: " + bytes_recv_per_second);
+    console.log("Latency: " + latency);
   }
 }
 

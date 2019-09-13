@@ -1,12 +1,12 @@
 // The main API abstraction for Killbot Hellscape.
 // Conventions: 
 //  - use snake_case for internal members
-//  - use camelCase for exposed API
 //
 
 // See https://www.linux-projects.org/documentation/uv4l-server/
-QUALITY = 10
-FORCE_HW_CODEC = false
+var QUALITY = 10;
+var FORCE_HW_CODEC = false;
+var TASK_POLLING_MS = 100;
 
 function get_my_id(ws) {
   ws.send(JSON.stringify({what: "get_my_id"}));
@@ -25,7 +25,6 @@ function is_defined(v) {
     return true;
   }
 }
-
 
 function KillbotServer(url, onReady) {
   var self = this;
@@ -52,6 +51,8 @@ function KillbotServer(url, onReady) {
       get_my_id(self.server);
       get_robot_id(self.server);
     };
+
+    self.start_background_tasks();
   }
 
 
@@ -206,7 +207,33 @@ function KillbotServer(url, onReady) {
     };
   }
 
-
+  //////////////////////
+  // Background Tasks //
+  //////////////////////
+  
+  self.start_background_tasks = function () {
+    polling_ms = 0;
+    setInterval(function() {
+      polling_ms += TASK_POLLING_MS;
+      for (var interval in self.intervals_to_tasks) {
+        if (polling_ms % interval == 0) {
+          // Call all the functions at this interval
+          self.intervals_to_tasks[interval].forEach(function (f) {
+            f();
+          });
+        }
+      }
+    }, TASK_POLLING_MS);
+  }
+  
+  self.intervals_to_tasks = {
+    1000: [
+      function () {
+        console.log("Calling ping...");
+        self.server.send(JSON.stringify({"what": "ping"}));
+      }
+    ],
+  }
 
   /////////////////////
   // Low-level Utils //

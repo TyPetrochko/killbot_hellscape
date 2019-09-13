@@ -1,22 +1,27 @@
 const WebSocket = require("ws")
+
+// To change WS path / port, see options on /etc/uv4l/uv4l-raspicam.conf
+const uv4l_url = "ws://127.0.0.1:8080/stream/webrtc"
 const server_url = process.argv[2]
 
 var my_id;
 var uv4l_ws;
-var server_ws;
+var signaling_server_ws;
 var controlled_by_id;
+
+const NETWORKING_LOOP_DURATION_MS = 1000;
 
 ///////////
 // Utils //
 ///////////
+
 function is_defined(v) {
   if (typeof v === "undefined") {
     return false;
   } else if (v === null) {
     return false;
-  } else {
-    return true;
   }
+  return true;
 }
 
 function close_ws_if_open(ws) {
@@ -68,83 +73,88 @@ function handle_signal_from_uv4l(message) {
   console.log("Received from uv4l: ");
   console.log(message);
   message.to = controlled_by_id;
-  send(server_ws, message);
+  send(signaling_server_ws, message);
 }
+
+// Note that is_disconnected and is_connected are not complements. WebSockets
+// in states CONNECTING or CLOSING are neither.
+function is_disconnected(ws) {
+  if (!is_defined(ws)) {
+    return true;
+  } else if (ws.readyState === WebSocket.CLOSED) {
+    return true;
+  }
+  return false;
+}
+
+function is_connected(ws) {
+  return (is_defined(ws) && ws.readyState === WebSocket.OPEN);
+}
+
 
 //////////////////////////////////
 // Bridge Server Implementation //
 //////////////////////////////////
 
-function start() {
-  // 1. Connect to local uv4l WebSocket
-  // To change WS path / port, see options on /etc/uv4l/uv4l-raspicam.conf
-  const uv4l_url = "ws://127.0.0.1:8080/stream/webrtc"
-  uv4l_ws = new WebSocket(uv4l_url);
-
-  uv4l_ws.on("error", function error(e) {
-    console.log("Error connecting to uv4l WebSocket: "+e);
-  });
-
-  uv4l_ws.on("close", function close() {
-    t = (new Date()).getTime();
-    console.log(t+": Disconnected from UV4L Retrying in 3 seconds.");
-    close_ws_if_open(server_ws);
-    start();
-  });
-
-  uv4l_ws.on("open", function open() {
-    console.log("Connected to uv4l WebSocket");
-    
-    // 2. Connect to our signaling server
-    // const server_url = "ws://192.168.1.22:8443" // Testing locally
-    // const server_url = "wss://killbot-hellscape.herokuapp.com:";
-    console.log("Connecting to signaling server: "+server_url);
-    server_ws = new WebSocket(server_url, {rejectUnauthorized:false});
-    
-    server_ws.on("error", function error(e) {
-      console.log("Error connecting to our WebSocket: "+e);
+setInterval(function() {
+  // Priority #1 - connect to UV4L
+  if (is_disconnected(uv4l_ws)) {
+    uv4l_ws = new WebSocket(uv4l_url);
+    uv4l_ws.on("error", function error(e) {
+      console.log("Error connecting to uv4l WebSocket: "+e);
     });
-
-    server_ws.on("close", function close() {
-      console.log("Disconnected from our WebSocket. Retrying...");
-      uv4l_ws.close();
+    uv4l_ws.on("close", function close() {
+      console.log("Disconnected from uv4l WebSocket");
+      // close_ws_if_open(signaling_server_ws);
     });
-
-    server_ws.on("open", function open() {
-      console.log("Connected to OUR WebSocket");
-      
-      // 3. Set up callbacks
+    uv4l_ws.on("open", function open() {
+      console.log("Connected to uv4l WebSocket");
       uv4l_ws.on("message", function (message) {
         structured = JSON.parse(message);
         
         console.log("RECEIVED FROM UV4L:");
         console.log(structured);
         switch (structured.what) {
-          case 'hangup':
+          case "hangup":
           case "call":
           case "offer":
           case "answer":
           case "iceCandidate":
           case "iceCandidates":
-          case 'addIceCandidate':
+          case "addIceCandidate":
             handle_signal_from_uv4l(structured);
             break;
           default:
             console.log("Bad message from uv4l!");
             console.log(structured);
         }
-      });
+      }); 
+    });
+  }
 
-      server_ws.on("message", function (message) {
+  // Priority #2 - connect to signaling server
+  if (is_connected(uv4l_ws) && is_disconnected(signaling_server_ws)) {
+    console.log("Connecting to signaling server: "+server_url);
+    signaling_server_ws = new WebSocket(server_url, {rejectUnauthorized:false});
+    
+    signaling_server_ws.on("error", function error(e) {
+      console.log("Error connecting to our signaling server: "+e);
+    });
+    signaling_server_ws.on("close", function close() {
+      console.log("Disconnected from signaling server");
+    });
+    signaling_server_ws.on("open", function open() {
+      console.log("Connected to signaling server!");
+      signaling_server_ws.on("message", function (message) {
         structured = JSON.parse(message);
         
-        console.log("RECEIVED FROM SERVER:");
+        console.log("RECEIVED FROM SIGNALING SERVER:");
         console.log(structured);
 
         switch (structured.what) {
           case "set_your_id":
             my_id = structured.data
-            send(server_ws, {what: "i_am_robot"});
+            send(signaling_server_ws, {what: "i_am_robot"});
             break;
           case 'hangup':
           case "call":
@@ -162,11 +172,19 @@ function start() {
       });
 
       // 4. Start the chain...
-      send(server_ws, {what: "get_my_id"});
+      send(signaling_server_ws, {what: "get_my_id"});
     });
-  });
-}
+  }
 
-start();
+  // No-op
+  if(is_connected(uv4l_ws) && is_connected(signaling_server_ws)) {
+    console.log("Connected to both!");
+  }
 
+  // Keep-alive
+  if(is_connected(signaling_server_ws)) {
+    send(signaling_server_ws, {what: "ping"});
+  }
+
+}, NETWORKING_LOOP_DURATION_MS);
 
