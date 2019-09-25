@@ -1,3 +1,6 @@
+whoami:
+	hostname -I
+
 server:
 	node src/server/server.js
 
@@ -24,3 +27,4 @@ conf:
 
 restart:
 	sudo service uv4l_raspicam restart
+	sudo bin/PIGPIO/pigpiod

@@ -1,11 +1,18 @@
+const os = require('os')
 const http = require('http');
 const fs = require('fs');
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 
+
 const PORT = process.env.PORT || 12345;
 
 // Util
+function get_ip() {
+  var networkInterfaces = os.networkInterfaces();
+  return networkInterfaces['wlan0'][0]['address']
+}
+
 function is_defined(v) {
   if (typeof v === "undefined") {
     return false;
@@ -33,7 +40,7 @@ server = http.createServer(function(request, response) {
 const wss = new WebSocketServer({server});
 
 // TODO: Make this reflect actual hostname
-console.log("Web server is running! Check it out at http://192.168.1.22:"+PORT);
+console.log("Web server is running! Check it out at http://"+get_ip()+":"+PORT);
 
 // Which client is our robot?
 var robot_id = -1; // TODO remove test default value

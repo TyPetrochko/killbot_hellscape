@@ -2,6 +2,10 @@
 
 ![XKCD Killbot Hellscape](https://imgs.xkcd.com/comics/the_three_laws_of_robotics_2x.png)
 
+# Dependencies
+* pigpio installed to bin/PIGPIO/pigpiod
+* UV4L
+
 # DONE
 * Cloud Server
   * Serve web client html
