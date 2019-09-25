@@ -8,10 +8,10 @@ rasclientheroku:
 	node src/ras/ras_client.js ws://killbot-hellscape.herokuapp.com
 
 rasclient:
-	node src/ras/ras_client.js ws://192.168.1.22:12345
+	node src/ras/ras_client.js ws://127.0.0.1:12345
 
 rasclientwithlogs:
-	node src/ras/ras_client.js ws://192.168.1.22:12345 > /tmp/ras_logs.txt
+	node src/ras/ras_client.js ws://127.0.0.1:12345 > /tmp/ras_logs.txt
 
 control:
 	python3 src/ras/main.py

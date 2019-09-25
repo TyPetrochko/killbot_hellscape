@@ -229,7 +229,7 @@ function KillbotServer(url, onReady) {
   self.intervals_to_tasks = {
     1000: [
       function () {
-        if (yourWsObject.readyState === WebSocket.OPEN) {
+        if (self.server.readyState === WebSocket.OPEN) {
           self.server.send(JSON.stringify({"what": "ping"}));
         }
       }
