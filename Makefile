@@ -14,7 +14,7 @@ rasclientwithlogs:
 	node src/ras/ras_client.js ws://192.168.1.22:12345 > /tmp/ras_logs.txt
 
 control:
-	python3 src/ras/data.py
+	python3 src/ras/main.py
 
 logs:
 	tail -f /var/log/syslog
